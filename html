@@ -206,5 +206,206 @@
         }
     </script>
 </body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Tracker - Diet and Fitness Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/dist/heroicons.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Cpath d="M0 0h1v1H0zM19 19h1v1h-1z"/%3E%3C/g%3E%3C/svg%3E');
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        button {
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="container bg-white rounded-xl shadow-xl p-8 max-w-5xl w-full">
+        <h1 class="text-4xl font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 py-4 px-6 rounded-lg mb-8 text-center">Progress Tracker - Diet and Fitness Tracker</h1>
+
+        <!-- Progress Section -->
+        <div class="mb-12 p-6 bg-gray-50 rounded-xl shadow-lg animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Progress Report
+            </h2>
+            <button onclick="showProgress()" class="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-md hover:bg-teal-600">Generate Report</button>
+            <div id="progressReport" class="mt-6 text-gray-700 leading-relaxed"></div>
+            <canvas id="calorieChart" class="mt-6"></canvas>
+        </div>
+    </div>
+
+    <script>
+        console.log("Progress Tracker Module Initialized");
+
+        // Placeholder dependencies (for standalone testing)
+        const foodLogger = {
+            getCaloriesForDate: () => 0,
+            getMacrosForDate: () => ({ protein: 0, carbs: 0, fats: 0 })
+        };
+        const exerciseLogger = {
+            getCaloriesBurnedForDate: () => 0
+        };
+        const userProfile = {
+            profile: { calorieGoal: 2000, bmi: "N/A" }
+        };
+
+        class ProgressTracker {
+            constructor() {
+                this.chart = null;
+            }
+
+            generateReport() {
+                try {
+                    const today = new Date().toISOString().split("T")[0];
+                    const foodCalories = foodLogger.getCaloriesForDate(today);
+                    const exerciseCalories = exerciseLogger.getCaloriesBurnedForDate(today);
+                    const netCalories = foodCalories - exerciseCalories;
+                    const calorieGoal = userProfile.profile ? userProfile.profile.calorieGoal : 0;
+                    const macros = foodLogger.getMacrosForDate(today);
+
+                    let report = <h3 class="text-xl font-semibold text-gray-800">Daily Progress Report (${today})</h3>;
+                    report += <p class="mt-2"><strong>Calories Consumed:</strong> ${foodCalories}</p>;
+                    report += <p><strong>Calories Burned:</strong> ${exerciseCalories}</p>;
+                    report += <p><strong>Net Calories:</strong> ${netCalories}</p>;
+                    if (calorieGoal > 0) {
+                        report += <p><strong>Calorie Goal:</strong> ${calorieGoal}</p>;
+                        report += <p><strong>Goal Status:</strong> ${netCalories <= calorieGoal ? "Met" : "Not Met"} (${Math.abs(netCalories - calorieGoal)} ${netCalories > calorieGoal ? "over" : "under"})</p>;
+                    }
+                    if (userProfile.profile && userProfile.profile.bmi !== "N/A") {
+                        report += <p><strong>BMI:</strong> ${userProfile.profile.bmi}</p>;
+                    }
+                    report += <h4 class="text-lg font-medium mt-4 text-gray-800">Macronutrient Breakdown</h4>;
+                    report += <p><strong>Protein:</strong> ${macros.protein.toFixed(1)} g</p>;
+                    report += <p><strong>Carbs:</strong> ${macros.carbs.toFixed(1)} g</p>;
+                    report += <p><strong>Fats:</strong> ${macros.fats.toFixed(1)} g</p>;
+                    return report;
+                } catch (e) {
+                    console.error("Report generation error:", e);
+                    return "<p class='text-red-400'>Error generating report.</p>";
+                }
+            }
+
+            generateChart() {
+                try {
+                    const ctx = document.getElementById("calorieChart").getContext("2d");
+                    const labels = [];
+                    const foodData = [];
+                    const exerciseData = [];
+                    const netData = [];
+
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        const dateString = date.toISOString().split("T")[0];
+                        labels.push(dateString);
+                        foodData.push(foodLogger.getCaloriesForDate(dateString));
+                        exerciseData.push(exerciseLogger.getCaloriesBurnedForDate(dateString));
+                        netData.push(foodData[foodData.length - 1] - exerciseData[exerciseData.length - 1]);
+                    }
+
+                    if (this.chart) {
+                        this.chart.destroy();
+                    }
+
+                    this.chart = new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: "Calories Consumed",
+                                    data: foodData,
+                                    backgroundColor: "rgba(75, 192, 192, 0.5)",
+                                    borderColor: "rgba(75, 192, 192, 1)",
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: "Calories Burned",
+                                    data: exerciseData,
+                                    backgroundColor: "rgba(255, 99, 132, 0.5)",
+                                    borderColor: "rgba(255, 99, 132, 1)",
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: "Net Calories",
+                                    data: netData,
+                                    backgroundColor: "rgba(54, 162, 235, 0.5)",
+                                    borderColor: "rgba(54, 162, 235, 1)",
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: "Calories",
+                                        font: { family: 'Poppins', size: 14, weight: '600' }
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: "Date",
+                                        font: { family: 'Poppins', size: 14, weight: '600' }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: "top",
+                                    labels: { font: { family: 'Poppins', size: 12 } }
+                                },
+                                title: {
+                                    display: true,
+                                    text: "Calorie Intake and Expenditure (Last 7 Days)",
+                                    font: { family: 'Poppins', size: 16, weight: '600' }
+                                }
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error("Chart generation error:", e);
+                    document.getElementById("progressReport").innerHTML += "<p class='text-red-400'>Error generating chart. Ensure Chart.js is loaded.</p>";
+                }
+            }
+
+            showProgress() {
+                const reportDiv = document.getElementById("progressReport");
+                reportDiv.innerHTML = this.generateReport();
+                this.generateChart();
+            }
+        }
+
+        const progressTracker = new ProgressTracker();
+
+        function showProgress() {
+            progressTracker.showProgress();
+        }
+    </script>
+</body>
 </html> 
+
 
