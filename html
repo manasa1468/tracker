@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Logger - Diet and Fitness Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/dist/heroicons.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Cpath d="M0 0h1v1H0zM19 19h1v1h-1z"/%3E%3C/g%3E%3C/svg%3E');
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        button {
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        table tr {
+            transition: background-color 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="container bg-white rounded-xl shadow-xl p-8 max-w-5xl w-full">
+        <h1 class="text-4xl font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 py-4 px-6 rounded-lg mb-8 text-center">Exercise Logger - Diet and Fitness Tracker</h1>
+
+        <!-- Exercise Section -->
+        <div class="mb-12 p-6 bg-gray-50 rounded-xl shadow-lg animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Log Exercise
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <select id="exerciseSelect" onchange="fillExerciseDetails()" class="p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-700">
+                    <option value="" selected>Custom Exercise</option>
+                    <option value="Walking">Walking</option>
+                    <option value="Running">Running</option>
+                    <option value="Cycling">Cycling</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="Weight Lifting">Weight Lifting</option>
+                    <option value="Jump Rope">Jump Rope</option>
+                </select>
+                <input type="text" id="exerciseName" placeholder="Exercise Name" class="p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-700">
+                <input type="number" id="exerciseDuration" placeholder="Duration (minutes)" oninput="fillExerciseDetails()" class="p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-700">
+                <input type="number" id="exerciseCalories" placeholder="Calories Burned" class="p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-700">
+                <input type="date" id="exerciseDate" class="p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-700">
+            </div>
+            <button onclick="logExercise()" class="mt-6 bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-md hover:bg-teal-600">Log Exercise</button>
+            <div id="exerciseError" class="text-red-400 text-sm mt-3"></div>
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-teal-100 text-gray-700">
+                            <th class="border border-gray-200 p-3 text-left">Date</th>
+                            <th class="border border-gray-200 p-3 text-left">Exercise</th>
+                            <th class="border border-gray-200 p-3 text-left">Duration (min)</th>
+                            <th class="border border-gray-200 p-3 text-left">Calories Burned</th>
+                            <th class="border border-gray-200 p-3 text-left">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exerciseTableBody" class="text-gray-600"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log("Exercise Logger Module Initialized");
+
+        const exerciseData = {
+            "Walking": 5,
+            "Running": 10,
+            "Cycling": 8,
+            "Swimming": 9,
+            "Yoga": 4,
+            "Weight Lifting": 6,
+            "Jump Rope": 12
+        };
+
+        class ExerciseLogger {
+            constructor() {
+                this.exerciseLogs = [];
+                this.loadExerciseLogs();
+            }
+
+            validateExercise(exerciseName, duration, calories, date) {
+                let errors = [];
+                if (!exerciseName || exerciseName.length < 2) {
+                    errors.push("Exercise name must be at least 2 characters.");
+                }
+                if (!duration || duration < 1 || duration > 300) {
+                    errors.push("Duration must be between 1 and 300 minutes.");
+                }
+                if (!calories || calories < 0 || calories > 2000) {
+                    errors.push("Calories burned must be between 0 and 2000.");
+                }
+                if (!date) {
+                    errors.push("Date is required.");
+                }
+                return errors;
+            }
+
+            logExercise(exerciseName, duration, calories, date) {
+                const errors = this.validateExercise(exerciseName, duration, calories, date);
+                if (errors.length > 0) {
+                    document.getElementById("exerciseError").innerText = errors.join(" ");
+                    return false;
+                }
+                try {
+                    const exerciseEntry = {
+                        id: Date.now(),
+                        exerciseName,
+                        duration: parseInt(duration),
+                        calories: parseInt(calories),
+                        date
+                    };
+                    this.exerciseLogs.push(exerciseEntry);
+                    localStorage.setItem("exerciseLogs", JSON.stringify(this.exerciseLogs));
+                    this.displayExerciseLogs();
+                    document.getElementById("exerciseError").innerText = "";
+                    return true;
+                } catch (e) {
+                    console.error("Exercise logging error:", e);
+                    document.getElementById("exerciseError").innerText = "Failed to log exercise. Check browser settings.";
+                    return false;
+                }
+            }
+
+            deleteExerciseLog(id) {
+                try {
+                    this.exerciseLogs = this.exerciseLogs.filter(log => log.id !== id);
+                    localStorage.setItem("exerciseLogs", JSON.stringify(this.exerciseLogs));
+                    this.displayExerciseLogs();
+                } catch (e) {
+                    console.error("Exercise delete error:", e);
+                    document.getElementById("exerciseError").innerText = "Failed to delete exercise log.";
+                }
+            }
+
+            loadExerciseLogs() {
+                try {
+                    const logs = localStorage.getItem("exerciseLogs");
+                    if (logs) {
+                        this.exerciseLogs = JSON.parse(logs);
+                        this.displayExerciseLogs();
+                    }
+                } catch (e) {
+                    console.error("Exercise logs load error:", e);
+                    document.getElementById("exerciseError").innerText = "Failed to load exercise logs. Clear browser data and try again.";
+                }
+            }
+
+            displayExerciseLogs() {
+                const tableBody = document.getElementById("exerciseTableBody");
+                tableBody.innerHTML = "";
+                this.exerciseLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                this.exerciseLogs.forEach(log => {
+                    const row = document.createElement("tr");
+                    row.className = "odd:bg-gray-100";
+                    row.innerHTML = `
+                        <td class="border border-gray-200 p-3">${log.date}</td>
+                        <td class="border border-gray-200 p-3">${log.exerciseName}</td>
+                        <td class="border border-gray-200 p-3">${log.duration}</td>
+                        <td class="border border-gray-200 p-3">${log.calories}</td>
+                        <td class="border border-gray-200 p-3"><button class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-all duration-300" onclick="exerciseLogger.deleteExerciseLog(${log.id})">Delete</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        const exerciseLogger = new ExerciseLogger();
+
+        function fillExerciseDetails() {
+            const exerciseSelect = document.getElementById("exerciseSelect").value;
+            const exerciseNameInput = document.getElementById("exerciseName");
+            const durationInput = document.getElementById("exerciseDuration").value;
+            const caloriesInput = document.getElementById("exerciseCalories");
+
+            if (exerciseSelect && exerciseData[exerciseSelect] && durationInput) {
+                exerciseNameInput.value = exerciseSelect;
+                caloriesInput.value = Math.round(exerciseData[exerciseSelect] * parseInt(durationInput));
+            } else {
+                exerciseNameInput.value = "";
+                caloriesInput.value = "";
+            }
+        }
+
+        function logExercise() {
+            const exerciseName = document.getElementById("exerciseName").value.trim();
+            const duration = document.getElementById("exerciseDuration").value;
+            const calories = document.getElementById("exerciseCalories").value;
+            const date = document.getElementById("exerciseDate").value;
+            exerciseLogger.logExercise(exerciseName, duration, calories, date);
+        }
+    </script>
+</body>
+</html> 
+
